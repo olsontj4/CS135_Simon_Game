@@ -1,1 +1,1 @@
-# CS135_Simon_Game
+# CS135 Simon Game
