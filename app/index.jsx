@@ -1,24 +1,23 @@
 import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 var sequence;
 var playerSequence;
-var acceptInput = true;
 var score = 0;
 
 export default function Index() {
   const [activeView, setActiveView] = useState("start");
   const [highlight, setHighlight] = useState("");
+  const [acceptInput, setAcceptInput] = useState("true");
   const sleep = ms => new Promise(r => setTimeout(r, ms));//Copied from StackOverflow
 
   async function buttonPress(value) {
-    console.log(value + " pressed.")
     if (acceptInput == false) {
       return;
     }
     else if (value == undefined) {
-      acceptInput = false;
+      setAcceptInput(false);
       setActiveView("game");
       sequence = [];
       playerSequence = [];
@@ -27,22 +26,22 @@ export default function Index() {
       return;
     }
     else {
-      acceptInput = false;
+      setAcceptInput(false);
       playerSequence.push(value);
       if (sequence[playerSequence.length - 1] != playerSequence[playerSequence.length - 1]) {
         score = (sequence.length - 1);
         setActiveView("score");
-        acceptInput = true;
+        setAcceptInput(true);
         return;
       }
       else if (sequence.length == playerSequence.length) {
         playerSequence = [];
         sequence.push(addToSequence());
         await playSequence();
-        acceptInput = true;
+        setAcceptInput(true);
         return;
       }
-      acceptInput = true;
+      setAcceptInput(true);
       return;
     }
   }
@@ -51,13 +50,13 @@ export default function Index() {
     let number = Math.floor(Math.random() * 4);
     switch (number) {
       case 0:
-        return "red";
+        return "Red";
       case 1:
-        return "green";
+        return "Green";
       case 2:
-        return "blue";
+        return "Blue";
       case 3:
-        return "yellow";
+        return "Yellow";
       default:
         console.log(number + " is invalid.")
         return;
@@ -68,52 +67,91 @@ export default function Index() {
     await sleep(1000);
     for (let i = 0; i < sequence.length; i++) {
       setHighlight(sequence[i]);
-      console.log(sequence[i]);
-      await sleep(1000);
+      await sleep(750);
+      setHighlight("");
+      await sleep(250);
     }
-    acceptInput = true;
+    setAcceptInput(true);
     return;
   }
 
   function GameButton(props) {
-    return (
-      <Pressable onPress={() => buttonPress(`${props.color}`)} style={[styles.gameButton, { backgroundColor: `${props.color}` }]}>
-        <Text style={styles.buttonText}>{props.color.charAt(0).toUpperCase() + props.color.slice(1)}</Text>
-      </Pressable>
-    )
+    if (props.name == highlight) {
+      return (
+        <Pressable onPress={() => buttonPress(`${props.name}`)} style={[styles.gameButton, { backgroundColor: `${props.highlightColor}` }]} />
+      )
+    }
+    else if (acceptInput == false) {
+      return (
+        <Pressable onPress={() => buttonPress(`${props.name}`)} style={[styles.gameButton, { backgroundColor: `${props.color}` }]} />
+      )
+    }
+    else {
+      return (
+        <Pressable
+          onPress={() => buttonPress(props.name)}
+          style={({ pressed }) => [
+            styles.gameButton,
+            {
+              backgroundColor: pressed ? props.highlightColor : props.color,
+            },
+          ]}
+        />
+      )
+    }
+
   }
 
   function Game() {
     {
       if (activeView === "start") {
         return (
-          <Pressable onPress={() => buttonPress()} style={styles.startButton}>
-            <Text>Start Game</Text>
+          <Pressable onPress={() => buttonPress()}
+            style={({ pressed }) => [
+              styles.startButton,
+              {
+                backgroundColor: pressed ? "#7f7fff" : "#5050ff",
+              },
+            ]}
+          >
+            <Text style={styles.buttonText}>Start Game</Text>
           </Pressable>
         )
       }
       else if (activeView === "game") {
         return (
-          <div style={{ ...styles.container, flexDirection: "column" }}>
-            <div style={{ ...styles.container, alignItems: "flex-end", flexDirection: "row" }}>
-              <GameButton color="red"></GameButton>
-              <GameButton color="green"></GameButton>
-            </div>
-            <div style={{ ...styles.container, alignItems: "flex-start", flexDirection: "row" }}>
-              <GameButton color="blue"></GameButton>
-              <GameButton color="yellow"></GameButton>
-            </div>
-          </div>
+          <View style={{ ...styles.container, flexDirection: "column" }}>
+            <View style={{ ...styles.container, alignItems: "flex-end", flexDirection: "row" }}>
+              <GameButton name="Red" color="#7f0000" highlightColor="#FF7f7f"></GameButton>
+              <GameButton name="Green" color="#007f00" highlightColor="#7fff7f"></GameButton>
+            </View>
+            <View style={{ ...styles.container, alignItems: "flex-start", flexDirection: "row" }}>
+              <GameButton name="Blue" color="#00007f" highlightColor="#7f7fff"></GameButton>
+              <GameButton name="Yellow" color="#7f7f00" highlightColor="#FFFF7f"></GameButton>
+            </View>
+          </View>
         )
       }
       else if (activeView === "score") {
         return (
-          <ScrollView>
-            <h1>Score: {score}</h1>
-            <Pressable onPress={() => buttonPress()} style={styles.startButton}>
-              <Text>New Game</Text>
-            </Pressable>
-          </ScrollView>
+          <>
+            <ScrollView>
+              <View style={{ ...styles.container, flexDirection: "column" }}>
+                <Text style={styles.score}>Score: {score}</Text>
+              </View>
+            </ScrollView>
+            <View>
+              <Pressable onPress={() => buttonPress()} style={({ pressed }) => [
+                styles.startButton,
+                {
+                  backgroundColor: pressed ? "#7f7fff" : "#5050ff",
+                },
+              ]}
+              >
+                <Text style={styles.buttonText}>New Game</Text>
+              </Pressable>
+            </View>
+          </>
         )
       }
     }
@@ -131,7 +169,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#3c3749",
+    backgroundColor: "#3f3644",
   },
   container: {
     flex: 1,
@@ -143,7 +181,6 @@ const styles = StyleSheet.create({
   startButton: {
     padding: 20,
     borderRadius: 10,
-    backgroundColor: "green",
   },
   gameButton: {
     aspectRatio: "1/1",
@@ -151,11 +188,16 @@ const styles = StyleSheet.create({
     maxWidth: 200,
     margin: 10,
     borderRadius: 15,
-    backgroundColor: "green",
   },
   buttonText: {
     flexDirection: "column",
     textAlign: "center",
     justifyContent: "center",
+    color: "white",
+    fontSize: 20,
   },
+  score: {
+    fontSize: 32,
+    color: "white",
+  }
 });
