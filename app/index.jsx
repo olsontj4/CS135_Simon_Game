@@ -1,23 +1,30 @@
+/*
+Author: Thomas Olson
+Date: 3/18/2026
+
+All code for this app is contained in the Index.
+*/
+
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-var sequence;
-var playerSequence;
+var sequence; //Holds random button sequence.
+var playerSequence; //Holds player's moves.
 var score = 0;
 
 export default function Index() {
-  const [activeView, setActiveView] = useState("start");
-  const [highlight, setHighlight] = useState("");
-  const [acceptInput, setAcceptInput] = useState("true");
+  const [activeView, setActiveView] = useState("start"); //Current screen.
+  const [highlight, setHighlight] = useState(""); //State for which button is highlighted.
+  const [acceptInput, setAcceptInput] = useState("true"); //Disables input.
   const sleep = ms => new Promise(r => setTimeout(r, ms));//Copied from StackOverflow
 
-  async function buttonPress(value) {
-    if (acceptInput == false) {
+  async function buttonPress(value) { //Most game logic is contained in the function for handling button presses.
+    if (acceptInput == false) { //Do nothing if buttons are flashing.
       return;
     }
-    else if (value == undefined) {
-      setAcceptInput(false);
+    else if (value == undefined) { //Setup game when start button is pressed.
+      setAcceptInput(false); //Input is disabled anytime new buttons are added to the sequence.
       setActiveView("game");
       sequence = [];
       playerSequence = [];
@@ -25,16 +32,16 @@ export default function Index() {
       await playSequence();
       return;
     }
-    else {
+    else { //Validate colored button press.
       setAcceptInput(false);
       playerSequence.push(value);
-      if (sequence[playerSequence.length - 1] != playerSequence[playerSequence.length - 1]) {
+      if (sequence[playerSequence.length - 1] != playerSequence[playerSequence.length - 1]) { //Compare player guess to actual button in sequence.
         score = (sequence.length - 1);
         setActiveView("score");
         setAcceptInput(true);
         return;
       }
-      else if (sequence.length == playerSequence.length) {
+      else if (sequence.length == playerSequence.length) { //All buttons are correct.
         playerSequence = [];
         sequence.push(addToSequence());
         await playSequence();
@@ -47,7 +54,7 @@ export default function Index() {
   }
 
   function addToSequence() {
-    let number = Math.floor(Math.random() * 4);
+    let number = Math.floor(Math.random() * 4); //Random color is selected.
     switch (number) {
       case 0:
         return "Red";
@@ -57,36 +64,33 @@ export default function Index() {
         return "Blue";
       case 3:
         return "Yellow";
-      default:
-        console.log(number + " is invalid.")
-        return;
     }
   }
 
   async function playSequence() {
-    await sleep(1000);
+    await sleep(1000); //Initial delay.
     for (let i = 0; i < sequence.length; i++) {
       setHighlight(sequence[i]);
-      await sleep(750);
+      await sleep(750); //Highlight for 0.75 seconds.
       setHighlight("");
-      await sleep(250);
+      await sleep(250); //Wait for 0.25 seconds so two flashes don't blend together.
     }
     setAcceptInput(true);
     return;
   }
 
-  function GameButton(props) {
-    if (props.name == highlight) {
+  function GameButton(props) { //Colored buttons.
+    if (props.name == highlight) { //Highlighted button.
       return (
         <Pressable onPress={() => buttonPress(`${props.name}`)} style={[styles.gameButton, { backgroundColor: `${props.highlightColor}` }]} />
       )
     }
-    else if (acceptInput == false) {
+    else if (acceptInput == false) { //Disabled button.
       return (
         <Pressable onPress={() => buttonPress(`${props.name}`)} style={[styles.gameButton, { backgroundColor: `${props.color}` }]} />
       )
     }
-    else {
+    else { //Pressable button.
       return (
         <Pressable
           onPress={() => buttonPress(props.name)}
@@ -104,7 +108,7 @@ export default function Index() {
 
   function Game() {
     {
-      if (activeView === "start") {
+      if (activeView === "start") { //Home screen.
         return (
           <Pressable onPress={() => buttonPress()}
             style={({ pressed }) => [
@@ -118,7 +122,7 @@ export default function Index() {
           </Pressable>
         )
       }
-      else if (activeView === "game") {
+      else if (activeView === "game") { //Main game screen.
         return (
           <View style={{ ...styles.container, flexDirection: "column" }}>
             <View style={{ ...styles.container, alignItems: "flex-end", flexDirection: "row" }}>
@@ -132,7 +136,7 @@ export default function Index() {
           </View>
         )
       }
-      else if (activeView === "score") {
+      else if (activeView === "score") { //Scrollable high score list. (No high scores are saved currently)
         return (
           <>
             <ScrollView>
@@ -157,7 +161,7 @@ export default function Index() {
     }
   }
 
-  return (
+  return ( //Index parent screen.
     <SafeAreaView style={styles.main}>
       <Game></Game>
     </SafeAreaView>
