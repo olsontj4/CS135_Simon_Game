@@ -1,23 +1,78 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function Index() {
-  const sequence = [];
-  const playerSequence = [];
-  const [activeView, setActiveView] = useState("start");
-  var acceptInput = false;
+var sequence;
+var playerSequence;
+var acceptInput = true;
+var score = 0;
 
-  function buttonPress(value) {
-    if (value == null) {
+export default function Index() {
+  const [activeView, setActiveView] = useState("start");
+  const [highlight, setHighlight] = useState("");
+  const sleep = ms => new Promise(r => setTimeout(r, ms));//Copied from StackOverflow
+
+  async function buttonPress(value) {
+    console.log(value + " pressed.")
+    if (acceptInput == false) {
+      return;
+    }
+    else if (value == undefined) {
+      acceptInput = false;
       setActiveView("game");
-      console.log(activeView);
+      sequence = [];
+      playerSequence = [];
+      sequence.push(addToSequence());
+      await playSequence();
       return;
     }
     else {
-      console.log(value);
+      acceptInput = false;
+      playerSequence.push(value);
+      if (sequence[playerSequence.length - 1] != playerSequence[playerSequence.length - 1]) {
+        score = (sequence.length - 1);
+        setActiveView("score");
+        acceptInput = true;
+        return;
+      }
+      else if (sequence.length == playerSequence.length) {
+        playerSequence = [];
+        sequence.push(addToSequence());
+        await playSequence();
+        acceptInput = true;
+        return;
+      }
+      acceptInput = true;
       return;
     }
+  }
+
+  function addToSequence() {
+    let number = Math.floor(Math.random() * 4);
+    switch (number) {
+      case 0:
+        return "red";
+      case 1:
+        return "green";
+      case 2:
+        return "blue";
+      case 3:
+        return "yellow";
+      default:
+        console.log(number + " is invalid.")
+        return;
+    }
+  }
+
+  async function playSequence() {
+    await sleep(1000);
+    for (let i = 0; i < sequence.length; i++) {
+      setHighlight(sequence[i]);
+      console.log(sequence[i]);
+      await sleep(1000);
+    }
+    acceptInput = true;
+    return;
   }
 
   function GameButton(props) {
@@ -49,6 +104,16 @@ export default function Index() {
               <GameButton color="yellow"></GameButton>
             </div>
           </div>
+        )
+      }
+      else if (activeView === "score") {
+        return (
+          <ScrollView>
+            <h1>Score: {score}</h1>
+            <Pressable onPress={() => buttonPress()} style={styles.startButton}>
+              <Text>New Game</Text>
+            </Pressable>
+          </ScrollView>
         )
       }
     }
